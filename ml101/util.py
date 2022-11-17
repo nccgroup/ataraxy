@@ -1006,7 +1006,7 @@ IMAGENET2012_CLASSES = OrderedDict(
     }
 )
 
-def whatIsIt(predictions):
+def whatCatAndConf(predictions):
   index = np.argmax(predictions[0,:])
   confidence = float(predictions[0, index])
   return IMAGENET2012_CLASSES[list(IMAGENET2012_CLASSES.keys())[index]], confidence
