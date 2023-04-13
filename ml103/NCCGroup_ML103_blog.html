@@ -3,7 +3,7 @@
 <head><meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>codegen_mar23</title><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
+<title>NCCGroup_ML103_blog</title><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
 
 
 
@@ -12000,10 +12000,6 @@ span.CodeMirror-selectedtext { background: none; }
   border-left: var(--jp-code-cursor-width0) solid var(--jp-editor-cursor-color);
 }
 
-@media (min-width: 1200px) {
-body {width: 1140px}
-}
-
 /* When zoomed out 67% and 33% on a screen of 1440 width x 900 height */
 @media screen and (min-width: 2138px) and (max-width: 4319px) {
   .jp-CodeMirrorEditor[data-type='inline'] .CodeMirror-cursor {
@@ -14212,7 +14208,7 @@ all of MD as it is not optimized for dense, information rich UIs.
   --jp-content-font-scale-factor: 1.2;
   --jp-content-font-size0: 0.83333em;
   --jp-content-font-size1: 16px; /* Base font size */
-  --jp-content-font-size2: 1.4em;
+  --jp-content-font-size2: 1.2em;
   --jp-content-font-size3: 1.44em;
   --jp-content-font-size4: 1.728em;
   --jp-content-font-size5: 2.0736em;
@@ -14244,7 +14240,7 @@ all of MD as it is not optimized for dense, information rich UIs.
    */
 
   --jp-code-font-size: 13px;
-  --jp-code-line-height: 1.5; /* 17px for 13px base */
+  --jp-code-line-height: 1.45; /* 17px for 13px base */
   --jp-code-padding: 5px; /* 5px for 13px base, codemirror highlighting needs integer px value */
   --jp-code-font-family-default: Menlo, Consolas, 'DejaVu Sans Mono', monospace;
   --jp-code-font-family: var(--jp-code-font-family-default);
@@ -14463,6 +14459,9 @@ all of MD as it is not optimized for dense, information rich UIs.
 * {
   -webkit-print-color-adjust: exact;
 }
+@media (min-width: 1200px) {
+  body {width: 1000px;}
+}
 
 /* Misc */
 a.anchor-link {
@@ -14613,18 +14612,18 @@ body[data-format='mobile'] .jp-OutputArea-child .jp-OutputArea-output {
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h1 id="Machine-Learning-103:-Exploring-AI-Code-Generation">Machine Learning 103: Exploring AI Code Generation<a class="anchor-link" href="#Machine-Learning-103:-Exploring-AI-Code-Generation">&#182;</a></h1><p>Eric Schorn<br />
+<h1 id="Machine-Learning-103:-Exploring-LLM-Code-Generation">Machine Learning 103: Exploring LLM Code Generation<a class="anchor-link" href="#Machine-Learning-103:-Exploring-LLM-Code-Generation">&#182;</a></h1><p>Eric Schorn<br />
 Technical Director<br />
 Cryptography Services Practice, NCC Group<br />
-March 31, 2023</p>
-<p>This executable blog post is the third in a series related to machine learning, and looks at AI code generation from a 16 billion parameter large langauge model (LLM). After a brief look under the hood at the LLM structure, a variety of Python functions will be generated alongside observations related to code quality and security. Similar to OpenAI's <a href="https://openai.com/blog/chatgpt">ChatGPT</a>, Google's <a href="https://blog.google/technology/ai/bard-google-ai-search-updates/">Bard</a>, Meta's <a href="https://ai.facebook.com/blog/large-language-model-llama-meta-ai/">LLaMa</a> and GitHub's <a href="https://github.com/features/copilot">Copilot</a>, we will see some fantastic capabilities and a few horrible misses! However, the key takeaway is that human expertise remains absolutely essential, whether it be in the prompt or in the code.</p>
-<p>The model used here was introduced in the paper titled <a href="https://arxiv.org/abs/2203.13474">CodeGen: An Open Large Language Model for Code with Multi-Turn Program Synthesis</a> from late 2022, and is supported via the <a href="https://huggingface.co/">Hugging Face</a> framework. As the paper suggests, in some respects this model's performance is comparable to that of the OpenAI Codex model which powers the GitHub Copilot product. Since this technology area is still in its infancy, any misadventures should be interpreted as opportunities for further research and the need for human technical expertise, rather than criticism.</p>
-<p>You can run everything for yourself by loading this <a href="https://github.com/nccgroup/ataraxy/blob/main/ml102/data/author.png">.ipynb file</a> into any Jupyter-based notebook system. The goal for the code below is to utilize state-of-the-art models while maximizing simplicity, understandability and accessibility. The approach of this third post is similar to that of the preceding two posts in the series:</p>
+April 15, 2023</p>
+<p>This executable blog post is the third in a series related to machine learning and explores code generation from a 16 billion parameter large language model (LLM). After a brief look under the hood at the LLM structure and parameter allocation, we generate a variety of Python functions and make observations related to code quality and security. Similar to OpenAI's <a href="https://openai.com/blog/chatgpt">ChatGPT</a>, Google's <a href="https://blog.google/technology/ai/bard-google-ai-search-updates/">Bard</a>, Meta's <a href="https://ai.facebook.com/blog/large-language-model-llama-meta-ai/">LLaMa</a> and GitHub's <a href="https://github.com/features/copilot">Copilot</a>, we will see some fantastic capabilities and a few intriguing misses. The results demonstrate that human expertise remains crucial, whether it be in engineering the prompt or in evaluating the generated code for suitability.</p>
+<p>The model used here was introduced in the paper titled <a href="https://arxiv.org/abs/2203.13474">CodeGen: An Open Large Language Model for Code with Multi-Turn Program Synthesis</a> from late 2022, with <a href="https://github.com/salesforce/codegen">code on GitHub</a>, and is supported via the <a href="https://huggingface.co/">Hugging Face</a> framework. As the paper suggests, in some respects this model's performance is comparable to that of the OpenAI Codex model which powered the GitHub Copilot product. Since this technology is still in its infancy, any misadventures should be interpreted as opportunities for further research and the need for human technical expertise, rather than as criticism.</p>
+<p>You can run everything for yourself by loading this <a href="https://github.com/nccgroup/ataraxy/blob/main/ml103/NCCGroup_ML103_blog.ipynb">.ipynb file</a> into any Jupyter-based notebook system. The goal for the code below is to utilize state-of-the-art models while maximizing simplicity, understandability, and accessibility. This is consistent with the two prior posts in the blog series:</p>
 <ul>
 <li><a href="https://research.nccgroup.com/2022/12/15/machine-learning-101-the-integrity-of-image-misclassification/">Machine Learning 101: The Integrity of Image (Mis)Classification?</a></li>
 <li><a href="https://research.nccgroup.com/2023/02/03/machine-learning-102-attacking-facial-authentication-with-poisoned-data/">Machine Learning 102: Attacking Facial Authentication with Poisoned Data</a></li>
 </ul>
-<h4 id="Some-housekeeping-and-initialization">Some housekeeping and initialization<a class="anchor-link" href="#Some-housekeeping-and-initialization">&#182;</a></h4><p>We import standard machine learning frameworks, implement a 'pretty printer' to help us control volumous output, and then report key version information.</p>
+<h4 id="Initialization">Initialization<a class="anchor-link" href="#Initialization">&#182;</a></h4><p>The code starts here with importing standard machine learning frameworks, implementing a 'pretty printer' support function to help manage voluminous output, and then reporting key version information.</p>
 
 </div>
 </div>
@@ -14641,7 +14640,7 @@ March 31, 2023</p>
 <span class="kn">import</span> <span class="nn">transformers</span>
 <span class="kn">from</span> <span class="nn">transformers</span> <span class="kn">import</span> <span class="n">AutoTokenizer</span><span class="p">,</span> <span class="n">AutoModelForCausalLM</span>
 <span class="kn">from</span> <span class="nn">torchinfo</span> <span class="kn">import</span> <span class="n">summary</span>
-<span class="kn">import</span> <span class="nn">warnings</span><span class="p">;</span> <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">)</span>  <span class="c1"># Pesky pytorch warning</span>
+<span class="kn">import</span> <span class="nn">warnings</span><span class="p">;</span> <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">)</span>  <span class="c1"># Pesky Pytorch artifact</span>
 
 <span class="k">def</span> <span class="nf">pprint</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">stop</span><span class="o">=</span><span class="mi">20</span><span class="p">):</span>  <span class="c1"># For pretty-printing with line numbers</span>
     <span class="n">lines</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -14686,7 +14685,8 @@ March 31, 2023</p>
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<p>Now we can import the pretrained model with its matching tokenizer, and report on the total model parameters. The model was first trained on 825GB of English text, then on a subset of Google’s publicly available BigQuery dataset containing multiple programming languages, and finally on a large amount of content exclusively in the Python programming language. While this Jupyter notebook does not require a GPU, it does consume roughly 80GB of memory for the LLM. The reported parameter count, via the <code>pprint()</code> function extracting line 419 of the model summary, includes some framework oddities and normalization coefficients, along with both training-only and inference-only instances so should only be considered an indicative ballpark.</p>
+<br>
+<p>Now the pretrained model can be loaded along with its matching tokenizer, and the total number of model parameters reported. This model was initially trained on 825GB of English text, then training continued on a subset of the BigQuery dataset containing multiple programming languages, and finally training concluded on a large amount of Python source code. While this Jupyter notebook does not require a GPU, the model does consume roughly 80GB of memory (with smaller but less capable models also available). The total parameter count is reported via our 'pretty printer' <code>pprint()</code> function which extracts line 419 of the model summary. The full summary is included at the very end of this post. This parameter count includes some ancillary functionality so we will only be working with the most significant digits below.</p>
 
 </div>
 </div>
@@ -14702,7 +14702,7 @@ March 31, 2023</p>
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">model</span> <span class="o">=</span> <span class="n">AutoModelForCausalLM</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="s2">&quot;Salesforce/codegen-16B-mono&quot;</span><span class="p">,</span> <span class="n">pad_token_id</span><span class="o">=</span><span class="mi">50256</span><span class="p">)</span>
 <span class="n">tokenizer</span> <span class="o">=</span> <span class="n">AutoTokenizer</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="s2">&quot;Salesforce/codegen-16B-mono&quot;</span><span class="p">)</span>
 <span class="n">model_summary</span> <span class="o">=</span> <span class="n">summary</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">depth</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span><span class="o">.</span><span class="fm">__str__</span><span class="p">()</span>
-<span class="n">pprint</span><span class="p">(</span><span class="n">model_summary</span><span class="p">,</span> <span class="mi">419</span><span class="p">,</span> <span class="mi">419</span><span class="p">)</span>
+<span class="n">pprint</span><span class="p">(</span><span class="n">model_summary</span><span class="p">,</span> <span class="mi">419</span><span class="p">,</span> <span class="mi">419</span><span class="p">)</span>  <span class="c1"># Extract one specific line of output</span>
 </pre></div>
 
      </div>
@@ -14738,25 +14738,48 @@ March 31, 2023</p>
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<p>So, how does one 'spend' 16 billion parameters?</p>
+<p>So, how does one 'spend' 16 billion parameters in a LLM?</p>
 <br>
-<h2 id="First,-the-transformer-architecture">First, the transformer architecture<a class="anchor-link" href="#First,-the-transformer-architecture">&#182;</a></h2><p>Essentially all of the most recent and popular LLMs are based on the transformer architecture. This revolutionary architecture was launched with the paper titled <a href="https://arxiv.org/abs/1706.03762">Attention Is All You Need</a> in 2017. While transformers have three broad categories (the encoder, the decoder and the encoder-decoder), the decoder category has arguably seen the most recent publicity and is what we use here. The basic organization is shown below and more detailed background can be found on <a href="https://en.wikipedia.org/wiki/Transformer_(machine_learning_model)">Wikipedia</a>.</p>
-<p>&lt;diagram goes here&gt;</p>
-<p>The tokenizer takes an input prompt string and creates a list of tokens (think: integers). Incredibly, the transformer model simply consumes the list of tokens, does about a trillion multiply-accumulate operations, and makes a prediction for the next most likely token. That (sampled) output token is then appended to the input list and the prediction process rerun again and again. Ultimately, this results the original list of tokens with another output list appended it, which is run through a reverse tokenizer to recover text.</p>
-<p>We now review how to spend 16 billion parameters in a transformer decoder model consisting of:</p>
+<h1 id="The-transformer-architecture-under-the-hood">The transformer architecture under the hood<a class="anchor-link" href="#The-transformer-architecture-under-the-hood">&#182;</a></h1><p>Essentially all of the most recent and popular LLMs are based on the transformer architecture. This revolutionary architecture was launched with the paper titled <a href="https://arxiv.org/abs/1706.03762">Attention Is All You Need</a> in 2017. While transformers have three broad categories (the encoder, the decoder, and the encoder-decoder), the decoder category has arguably seen the most recent publicity and is what we are using here. The basic organization is shown in the classic diagram below sourced from the detailed background available on <a href="https://en.wikipedia.org/wiki/Transformer_(machine_learning_model)">Wikipedia</a>.</p>
+
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<p><img src="data:image/png;base64,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" alt="The-Transformer-model-architecture.png" /></p>
+
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<p>The decoder variant of a transformer is constrained to the components shown on the above right without any of those shown on the above left (which is the encoder). The larger block is repeated many times -- 34 in our case. As suggested by the bottom-most label, during inference the output of the model is repeatedly prepended to the input and the model rerun for each output token.</p>
+<p>The tokenizer maps an input prompt string and reference vocabulary to an input list of tokens (which are just integers). Incredibly, the transformer model simply consumes the list of tokens and performs about a (figurative) trillion multiply-accumulate operations as data moves through each layer, which finally results in a prediction for the next most likely set of tokens. The sampled output token is then appended to the input token list and the prediction process rerun again and again. Ultimately, this results the original list of tokens with the output list appended to it, which is run through a reverse tokenizer to recover the result text.</p>
+<p>Let's look at the construction of each the following system components while examining how 16 billion parameters are 'spent':</p>
 <ol>
-<li>The tokenizer</li>
+<li>Tokenizer</li>
 <li>Word embeddings</li>
-<li>Repeated layers consisting of<ul>
+<li>Repeated blocks consisting of<ul>
 <li>Self-attention mechanism</li>
-<li>Fully-connected sublayers</li>
+<li>Fully-connected feed-forward sublayers</li>
 </ul>
 </li>
 <li>Linear layer with softmax output.</li>
 </ol>
 <br>
-<h4 id="1.-Tokenizer">1. Tokenizer<a class="anchor-link" href="#1.-Tokenizer">&#182;</a></h4><p>The tokenizer is not strictly a part of the transformer model so does not consume parameters itself. Rather, it is a parsing function that uses a reference vocabulary with an input text string to produce a list of numbers corresponding to the words found in the input. The reference vocabularly can loosely be thought of as a set of words that each have a 'serial number' (which will later become an index to an array). For example, the sentence &quot;The cat and the dog went to the beach&quot; may correspond to <code>[1, 76, 2, 1, 67, 42, 5, 1, 99]</code> if the word <code>the</code> maps to 1, the word <code>cat</code> maps to 76, the word <code>beach</code> maps to 99, and so forth -- note the repeated <code>the</code> becomes a repeated <code>1</code>. With a little thought, it becomes clear that there is considerable additional complexity around capitalization, verb tense, word stems, punctuation and vocabularly size constraints which are outside the scope of this blog post.</p>
-<p>The LLM we are using here utilizes Byte-Pair Encoding tokenization as described by <a href="https://huggingface.co/course/chapter6/5">Hugging Face here</a>. Below we see the vocabulary size followed by a a test prompt. This test promp is tokenized and the resulting list of tokens shown. Each token is converted back to its vocabulary word and printed within pipes to show segmentation. Note how some tokens, such as the first two 4299 and 825 (which relate to <code>def</code>), may or may not consume an adjacent space. Rare words and nonsense are split, as are some number sequences. Finally, some arbitrary numbers are chosen, decoded and printed -- here we see some punctuation and word suffixes appear. All of our prompts below will be passed through this tokenizer.</p>
+<h4 id="1.-Tokenizer">1. Tokenizer<a class="anchor-link" href="#1.-Tokenizer">&#182;</a></h4><p>The tokenizer is not strictly a part of the transformer model and does not consume parameters itself. Rather, it is a parsing and mapping function that is given a reference vocabulary set along with an input text string and produce a list of tokens corresponding to the words found in the input. The reference vocabulary can loosely be thought of as a Python set of words that each have a 'reference number' (which will later become an index to an embedding array). For example, the sentence &quot;The cat and the dog went to the beach&quot; may correspond to <code>[1, 76, 2, 1, 67, 42, 5, 1, 99]</code> if the word <code>the</code> maps to 1, the word <code>cat</code> maps to 76, the word <code>beach</code> maps to 99, and so forth -- note the repeated <code>the</code> becomes a repeated <code>1</code>. With a little thought, it becomes clear that there is considerable additional complexity around capitalization, verb tenses, word stems, punctuation and vocabulary size constraints which are outside the scope of this blog post.</p>
+<p>The LLM we are using here utilizes Byte-Pair Encoding tokenization as described by <a href="https://huggingface.co/course/chapter6/5">Hugging Face here</a>. Below we see the vocabulary size reported, followed by a test prompt. This test prompt is tokenized and the resulting list of tokens shown. Each token is converted back to its vocabulary word and printed within pipes to show segmentation. Note how some tokens, such as the first two 4299 and 825 (which relate to <code>def</code>), may or may not consume their adjacent space. Rare words and nonsense are split, as are some number sequences. Finally, some arbitrary vocabulary tokens are chosen, decoded, and printed -- here we see some punctuation and word suffixes appear. All of our prompts below will be passed through this tokenizer, and it is interesting to note that this tokenizer is not Python specific.</p>
 
 </div>
 </div>
@@ -14816,7 +14839,7 @@ Arb vocab:   |&#34;|#|&amp;|+|5|S|�||ine|ale|
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 <br>
-<h4 id="2.-Word-embeddings">2. Word embeddings<a class="anchor-link" href="#2.-Word-embeddings">&#182;</a></h4><p>Word embeddings offer the opportunity to expand the meaning of each vocabulary token. Effectively, it is a learned mapping from a token number to a real-valued vector. Consider an array with the rows corresponding to the vocabularly size and the columns corresponding to the 'embedding dimension'. We present each token to the array as a row address, it does a lookup, and returns a word vector. As we have seen, the vocabulary size is 50,257 and the model has an embedding dimension of 6144. As printed below, we see this translates into (approximately!) 314M learned parameters.</p>
+<h4 id="2.-Word-embeddings">2. Word embeddings<a class="anchor-link" href="#2.-Word-embeddings">&#182;</a></h4><p>Word embeddings are the initial stage of the transformer model and offer the capability of expanding the meaning of each vocabulary token. Effectively, they are a learned mapping from a single token number to a real-valued word vector. Consider an array with each row corresponding to the address of a vocabulary word and the row contents (or columns) corresponding to the learned word vector of 'embedding dimension'. We present each token to the array as a row address, the array does a lookup, and returns a word vector. This is repeated for all input tokens. The transformer has a vocabulary size of 51,200 and the model has an embedding dimension of 6,144. As 'pretty printed' below, this translates into 51,200 * 6,144 or 315M learned parameters (rounded to the nearest million).</p>
 
 </div>
 </div>
@@ -14829,9 +14852,8 @@ Arb vocab:   |&#34;|#|&amp;|+|5|S|�||ine|ale|
 <div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[4]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Print size of word embedding &#39;array&#39;</span>
-<span class="n">pprint</span><span class="p">(</span><span class="n">model_summary</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
-<span class="n">pprint</span><span class="p">(</span><span class="n">model_summary</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">pprint</span><span class="p">(</span><span class="n">model_summary</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>  <span class="c1"># Table headings</span>
+<span class="n">pprint</span><span class="p">(</span><span class="n">model_summary</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>  <span class="c1"># Embedding stats</span>
 </pre></div>
 
      </div>
@@ -14872,10 +14894,10 @@ Arb vocab:   |&#34;|#|&amp;|+|5|S|�||ine|ale|
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 <br>
-<h4 id="3.-Repeated-layers">3. Repeated layers<a class="anchor-link" href="#3.-Repeated-layers">&#182;</a></h4><p>The transformer architecture involves a large number of repeated layers. Each layer has two primary elements: a self-attention element, and a two fully connected layers.</p>
-<p>The self-attention sub-layer has three equal-sized matrices called <code>Q</code> for query, <code>K</code> for key and <code>V</code> for value. The matrices are effectively multiplied together to emphasize particular elements of the layer inputs. With an embedding dimension of 6144 and three square matrices, we have 113M learned parameters. The results are then projected through another square matrix of 6144 X 6144, resulting in 37.7M learned parameters.</p>
-<p>The two fully connected layers are effectively two matrices with an input and output of embedded dimension, but with an additional and larger internal dimension. In this case it is 24576. As a result we have 6144 * 24576 = 151M learned parameters. The second matrix reverses the dimentions giving another 24576 * 6144 = 151M learned parameters. This whole block is repeated 33 times, giving us a total of 33<em>(113M + 37M + 2</em>151M) = 14.9B learned parameters.</p>
-<p>CodeGenBlock <a href="https://github.com/salesforce/CodeGen/blob/main/jaxformer/hf/codegen/modeling_codegen.py#L246">https://github.com/salesforce/CodeGen/blob/main/jaxformer/hf/codegen/modeling_codegen.py#L246</a></p>
+<h4 id="3.-Repeated-blocks">3. Repeated blocks<a class="anchor-link" href="#3.-Repeated-blocks">&#182;</a></h4><p>The transformer architecture involves a large number of repeated blocks arranged one after another like a pipeline. Each block has two primary elements: a self-attention mechanism, and two fully-connected feed-forward layers.</p>
+<p>The self-attention mechanism involves three equal-sized matrices called <code>Q</code> for query, <code>K</code> for key and <code>V</code> for value. The matrices are effectively multiplied together to calculate the attention appropriate to each element of the subsequent layer inputs. With an embedding dimension of 6,144 and three square matrices, this requires 113M learned parameters. The results are then projected through another square matrix of size 6,144 * 6,144, resulting in another 38M learned parameters.</p>
+<p>The two fully connected layers consist of two matrices with an input and output size equal to the embedded dimension of 6,144, but with an additional and larger internal dimension. In this case it is 24,576. As a result we have 6,144 * 24,576 or 151M learned parameters. The second matrix reverses the dimensions, which requires another 151M learned parameters.</p>
+<p>This whole block is repeated 34 times in this model, resulting in 34 * (113M + 38M + 2 * 151M) or a total of 15.4B learned parameters for the repeated blocks. The few parameters reported below relating to the normalization layer are not dealt with here.</p>
 
 </div>
 </div>
@@ -14888,9 +14910,8 @@ Arb vocab:   |&#34;|#|&amp;|+|5|S|�||ine|ale|
 <div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[5]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Decoder: This prints the statistics for one block (which is then repeated)</span>
-<span class="n">pprint</span><span class="p">(</span><span class="n">model_summary</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
-<span class="n">pprint</span><span class="p">(</span><span class="n">model_summary</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">19</span><span class="p">)</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">pprint</span><span class="p">(</span><span class="n">model_summary</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>   <span class="c1"># Table headings</span>
+<span class="n">pprint</span><span class="p">(</span><span class="n">model_summary</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">19</span><span class="p">)</span>  <span class="c1"># Block stats</span>
 </pre></div>
 
      </div>
@@ -14942,10 +14963,7 @@ Arb vocab:   |&#34;|#|&amp;|+|5|S|�||ine|ale|
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 <br>
-<h4 id="4-Output-layer">4 Output layer<a class="anchor-link" href="#4-Output-layer">&#182;</a></h4><p>Consider the output layer as a 'next token classifier'. 4096 inputs are presented to a fully connected linear layer with 50257 output tokens. These tokens then go into a &quot;reverse tokenizer&quot; for textual output.</p>
-<ul>
-<li>Fully connected layer 6144 internal dim X 50257 vocab = 315M</li>
-</ul>
+<h4 id="4-Output-layer">4 Output layer<a class="anchor-link" href="#4-Output-layer">&#182;</a></h4><p>The output layer is a relatively straightforward fully-connected feed-forward classifier. It is presented with 6,144 inputs from the last stacked block described above and returns the predicted probability of each of the 51,200 output tokens. This requires a matrix of 6,144 * 51,200 resulting in 315M parameters. The output is ultimately sampled and put into a &quot;reverse tokenizer&quot; for final text output. Note that the vocabulary size is not precisely matched between the tokenizer, input, and output -- this is an extraneous artifact for our purposes here.</p>
 
 </div>
 </div>
@@ -14958,9 +14976,8 @@ Arb vocab:   |&#34;|#|&amp;|+|5|S|�||ine|ale|
 <div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[6]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Output statistics here</span>
-<span class="n">pprint</span><span class="p">(</span><span class="n">model_summary</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
-<span class="n">pprint</span><span class="p">(</span><span class="n">model_summary</span><span class="p">,</span> <span class="mi">417</span><span class="p">,</span> <span class="mi">417</span><span class="p">)</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">pprint</span><span class="p">(</span><span class="n">model_summary</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>      <span class="c1"># Table headings</span>
+<span class="n">pprint</span><span class="p">(</span><span class="n">model_summary</span><span class="p">,</span> <span class="mi">417</span><span class="p">,</span> <span class="mi">417</span><span class="p">)</span>  <span class="c1"># Output layer stats</span>
 </pre></div>
 
      </div>
@@ -15000,8 +15017,20 @@ Arb vocab:   |&#34;|#|&amp;|+|5|S|�||ine|ale|
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<p>This gives us a total of 315M + 15.4B + 315M = 16B parameters!</p>
+
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 <br>
-<h2 id="3.0-LLM-Code-Generation">3.0 LLM Code Generation<a class="anchor-link" href="#3.0-LLM-Code-Generation">&#182;</a></h2><p>Goal is to survey the LLM capabilities. The function below is central to this: given a prompt, put it through the tokenizer, put the tokens through the model, and return the complete prompt+response</p>
+<h1 id="LLM-code-generation">LLM code generation<a class="anchor-link" href="#LLM-code-generation">&#182;</a></h1><p>Now we will survey code samples generated by the 16 billion parameter model described above. The helper function below will be central to this: the given prompt is tokenized, the tokens injected into the model repeatedly, and the final output tokens decoded into a returned result string. Note that beam search means the probabilities are considered over a series of 10 tokens which improves the results significantly.</p>
 
 </div>
 </div>
@@ -15014,15 +15043,12 @@ Arb vocab:   |&#34;|#|&amp;|+|5|S|�||ine|ale|
 <div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[7]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Check all the parameters below; remove if default or not necessary..</span>
-    
-<span class="k">def</span> <span class="nf">generate</span><span class="p">(</span><span class="n">prompt</span><span class="p">):</span>
-    <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
-        <span class="n">input_ids</span> <span class="o">=</span> <span class="n">tokenizer</span><span class="p">(</span><span class="n">prompt</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot; </span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">),</span> <span class="n">return_tensors</span><span class="o">=</span><span class="s2">&quot;pt&quot;</span><span class="p">)</span>
-        <span class="n">generated_ids</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="o">**</span><span class="n">input_ids</span><span class="p">,</span> <span class="n">max_new_tokens</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span> <span class="n">do_sample</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> 
-                                       <span class="n">num_beams</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=</span><span class="mf">0.75</span><span class="p">)</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="n">tokenizer</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">generated_ids</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">skip_special_tokens</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">result</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">generate</span><span class="p">(</span><span class="n">prompt</span><span class="p">):</span>
+    <span class="n">input_ids</span> <span class="o">=</span> <span class="n">tokenizer</span><span class="p">(</span><span class="n">prompt</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot; </span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">),</span> <span class="n">return_tensors</span><span class="o">=</span><span class="s2">&quot;pt&quot;</span><span class="p">)</span>
+    <span class="n">generated_ids</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="o">**</span><span class="n">input_ids</span><span class="p">,</span> <span class="n">max_new_tokens</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span> <span class="n">do_sample</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> 
+                                   <span class="n">num_beams</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=</span><span class="mf">0.75</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">tokenizer</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">generated_ids</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">skip_special_tokens</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">result</span>
 </pre></div>
 
      </div>
@@ -15038,23 +15064,8 @@ Arb vocab:   |&#34;|#|&amp;|+|5|S|�||ine|ale|
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 <br>
-<h3 id="3.1-CodeGen:-Unit-Conversion-Trivia-and-Programming-Challenges">3.1 CodeGen: Unit Conversion Trivia and Programming Challenges<a class="anchor-link" href="#3.1-CodeGen:-Unit-Conversion-Trivia-and-Programming-Challenges">&#182;</a></h3><p>We will write out a function with an informative name, common parameter names and the docstring. The model should supply the remainder of the implementation. This pattern is applied for all the following queries.</p>
-<p>We start with a simple unic conversion trivia question.</p>
-<p>We see the model consume the prompt and begin predicting the next tokens over and over. It appears to be writing more code similar to what we asked for, as if it were daydreaming or just continuing in the recalled context. Nice progression.</p>
-<ul>
-<li>We use a function and parameter name that suggests the functionality along with a straightfoward docstring.</li>
-<li>It is interesting that the model continues 'free-association' to supply related output.<ul>
-<li>Function names are good</li>
-<li>Function parameters are good</li>
-</ul>
-</li>
-<li>There is an assumption that the minutes type support multiplication and division, but that is very reasonable</li>
-<li>There likely isn't enough examples of Python type hints<ul>
-<li>TKTK try it!</li>
-</ul>
-</li>
-<li>This code looks great</li>
-</ul>
+<h4 id="1.-Unit-conversion-and-programming-challenges">1. Unit conversion and programming challenges<a class="anchor-link" href="#1.-Unit-conversion-and-programming-challenges">&#182;</a></h4><p>All of the code generation samples will begin with a prompt involving the target function signature and a docstring that describes the desired behavior. The <code>generate()</code> function implemented above will utilize this to produce model output which is presented through the 'pretty print' function <code>pprint()</code> (where the two numerical arguments indicate what line range to print).</p>
+<p>A simple prompt to stimulate the generation of a unit conversion helper function is supplied below. The model generates what it thinks is the most likely completion, and is allowed to continue running for a few extra lines, almost as if daydreaming about related code. It is interesting to see that the functionality is correct, and that the subsequent functions are related, correct, have appropriate names and also have type hints. As the training material has relatively minimal type hints, we drop this aspect moving forward in favor of a more specific docstring.</p>
 
 </div>
 </div>
@@ -15069,7 +15080,7 @@ Arb vocab:   |&#34;|#|&amp;|+|5|S|�||ine|ale|
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">pprint</span><span class="p">(</span><span class="n">generate</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
 <span class="s2">def min2sec(minutes: float):</span>
-<span class="s2">    </span><span class="se">\&quot;</span><span class="s2">&quot;&quot;Converts the input minutes into seconds.</span><span class="se">\&quot;</span><span class="s2">&quot;&quot; &quot;&quot;&quot;</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">15</span><span class="p">)</span>
+<span class="s2">    </span><span class="se">\&quot;</span><span class="s2">&quot;&quot;Converts the input minutes into seconds.</span><span class="se">\&quot;</span><span class="s2">&quot;&quot; &quot;&quot;&quot;</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">18</span><span class="p">)</span>
 </pre></div>
 
      </div>
@@ -15105,6 +15116,9 @@ Arb vocab:   |&#34;|#|&amp;|+|5|S|�||ine|ale|
  13: 
  14: 
  15: def hour2min(hours: float):
+ 16:     &#34;&#34;&#34;Converts the input hours into minutes.&#34;&#34;&#34;
+ 17:     return hours * 60
+ 18: 
 </pre>
 </div>
 </div>
@@ -15121,13 +15135,7 @@ Arb vocab:   |&#34;|#|&amp;|+|5|S|�||ine|ale|
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 <br>
-<p>Now we derive a challenge from Project Euler. The different course taken on function names per lines 5 and 6 further suggest memorization as the challenge specifically mentions 3 and 5. It is also likely there is more training data available for this case. The second function doesn't utilize the 'b' parameter, while the third removes generality. The third is sum of multiples of 3 that are also multiples of 5 <strong>PLUS</strong> sum of all multiples of 5 that are also multiples of 3. What happens if any of the inputs are negative?</p>
-<ul>
-<li>This was derived from project Euler, so plenty of examples on the internet to learn from</li>
-<li>It is interesting that the docstring on line 1 uses the word &quot;and&quot;, while the code on line 4 uses the logical &quot;or&quot; operator.</li>
-<li>If &quot;and&quot; were the correct choice, the iterator could take much larger steps of a*b. Even with &quot;or&quot;, there could be two loops in series where the first increments by a, the second increments by b, and the test only needs to ensure the same value is not counted twice. All of this would cut down the iterations.</li>
-<li>A comprehensive code review would consider the required functionality of this leaf function in the context of the overall algorithm calling it. e.g. it considers intent -&gt; documentation -&gt; implementation</li>
-</ul>
+<p>A prompt to stimulate the generation of another helper function, derived from a challenge in <a href="https://projecteuler.net/problem=1">Project Euler</a>, is supplied below. It is interesting that the docstring contains the word &quot;<strong>and</strong>&quot; while the generated code includes the logical-<strong>OR</strong> operator on line 4. Whether the code is actually correct requires some context and human thought. If the operator should instead be logical-AND, then the loop <code>range()</code> and contents could be significantly simplified. A comprehensive (human) code review would investigate the potential differences between intent, docstring and implementation across the overall application.</p>
 
 </div>
 </div>
@@ -15186,16 +15194,7 @@ Arb vocab:   |&#34;|#|&amp;|+|5|S|�||ine|ale|
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 <br>
-<p>Now we look at extracting email address. You would think this common task would be easy to recall.</p>
-<ul>
-<li>Another common objective but one that is difficult to specify</li>
-<li>The &quot;not&quot; on line 2 gives one pause while they decode the functionality; could be simply refactored to improve intuitive readablility.</li>
-<li>The match group following the @ allows immediate and repeated dot, underbar, and dash.</li>
-<li>The online Python regex tester at <a href="https://regex101.com/">https://regex101.com/</a> shows <code>eric@..nccgroup..helloThereThisIsATest</code> matches.</li>
-<li>While the list of domain extensions is large and growing, a maximum length is reasonable</li>
-<li>The 'correct answer' also involves internationalization and unicode, making it overly hard see <a href="https://www.rfc-editor.org/rfc/rfc6530">RFC 6530</a>, <a href="https://www.rfc-editor.org/rfc/rfc6531">RFC 6531</a>, <a href="https://www.rfc-editor.org/rfc/rfc6532">RFC 6532</a> and <a href="https://www.rfc-editor.org/rfc/rfc6533">RFC 6533</a></li>
-<li>Worst case <a href="https://www.cvedetails.com/cve/CVE-2021-31409/">CVE-2021-31409</a>: Unsafe validation RegEx in EmailValidator component...</li>
-</ul>
+<p>A prompt to stimulate the generation of a function to validate legal email addresses is supplied below. While the docstring is simple and complete, the task is actually very complex and somewhat open-ended as evidenced by <a href="https://www.rfc-editor.org/rfc/rfc6530">RFC 6530</a>, <a href="https://www.rfc-editor.org/rfc/rfc6531">RFC 6531</a>, <a href="https://www.rfc-editor.org/rfc/rfc6532">RFC 6532</a> and <a href="https://www.rfc-editor.org/rfc/rfc6533">RFC 6533</a>. Despite an unusual logical inversion involving the <code>if</code> condition and return values, and even without considering internationalization, Unicode and normalization, the generated code incorrectly validates <code>joe@..nccgroup..helloThereThisIsATest</code>. Furthermore, <a href="https://www.cvedetails.com/cve/CVE-2021-31409/">CVE-2021-31409</a> &quot;Unsafe validation RegEx in EmailValidator component&quot; suggests there can be problems lurking below the surface when using regular expressions to process attacker-controlled input.</p>
 
 </div>
 </div>
@@ -15252,14 +15251,7 @@ Arb vocab:   |&#34;|#|&amp;|+|5|S|�||ine|ale|
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 <br>
-<h3 id="3.2-CodeGen:-Specialized-Math">3.2 CodeGen: Specialized Math<a class="anchor-link" href="#3.2-CodeGen:-Specialized-Math">&#182;</a></h3><p>Elliptic curves are an extremely specialized topic for which we can compose a very concise docstring. This raises suspicions that the code was memorized? Need to elabroate incorrectness. Hint at projective coordinates. Constant time may be relevant.</p>
-<ul>
-<li>Very specialized, maybe esoteric</li>
-<li>Code makes some assumptions on operands, e.g. a point is INFINITY or (x, y) where x, y support addition and multiplication, and point is on the curve</li>
-<li>Code correctly defers to double() function</li>
-<li>But, it is correct!!! Fantastic!!!</li>
-<li>A human provided with a larger context would be able to determin wheter affine, projective, jacobian or other co-ordinate systems are the most efficient.</li>
-</ul>
+<h4 id="2-Specialized-math">2 Specialized math<a class="anchor-link" href="#2-Specialized-math">&#182;</a></h4><p>Elliptic curves are an extremely specialized topic for which a very concise prompt can be supplied. A prompt to stimulate the generation of a function to calculate the group law is supplied below. While the resulting code makes some assumptions on the operand types, input validity and a supporting <code>double()</code> helper function, it works through the necessary corner cases properly and is indeed correct overall! While human expertise is required to determine whether affine, projective, Jacobian or other co-ordinate systems may be the most efficient for a given context, in this basic instance the generated code is a win!</p>
 
 </div>
 </div>
@@ -15327,13 +15319,7 @@ Arb vocab:   |&#34;|#|&amp;|+|5|S|�||ine|ale|
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 <br>
-<p>Now let's test for prime numbers. For loop should only go to sqrt of input. can do far better. <a href="https://en.wikipedia.org/wiki/Primality_test#Python">https://en.wikipedia.org/wiki/Primality_test#Python</a></p>
-<ul>
-<li>This is very nice code</li>
-<li>The upper range of test factors on line 9 is involves the square root of the input a; nice</li>
-<li>Note that this will test for multiples of 3 then later 9 then later 27. If the input were not a multple of 3, then it could not be a multiple of 9 or 27. Hence, this has some inefficiencies.</li>
-<li>One common approach is to first test a hardcoded block of smallest primes and then start the range testing; similar to repeating lines 6-7 for a hardcoded list.</li>
-</ul>
+<p>A prompt to stimulate the generation of a function that tests for prime numbers is supplied below. The initial cases tested on lines 2, 4 and 6 are correct. The loop <code>range()</code> endpoint on line 9 for testing factors correctly involves the square root of the operand. However, this loop is inefficient in that (for example) an input of 733 will be tested for divisibility by 3, 9, and 27 among other factors, but the latter two tests cannot succeed if the former test fails (so these latter two tests would be redundant). This issue is somewhat common, so many implementations test a longer list of primes on line 6 so that the loop on line 9 can take much larger steps. In the end, for the size of integers normally used in cryptographic applications, this sort of deterministic test that checks all potential factors would 'never complete' and thus a <a href="https://en.wikipedia.org/wiki/Primality_test#Probabilistic_tests">probabilistic primality test</a> would be required. As before, this requires human expertise to evaluate the suitability of generated code.</p>
 
 </div>
 </div>
@@ -15398,22 +15384,7 @@ Arb vocab:   |&#34;|#|&amp;|+|5|S|�||ine|ale|
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 <br>
-<p>Modular square roots are tricky...</p>
-<ul>
-<li>Interesting to see the assert<ul>
-<li>This is generally a debug aid</li>
-<li>A program may be running in optimized mode with debug turned off</li>
-<li>It will not allow the caller to handle error conditions; sometimes this is DoS</li>
-<li>The assert on line 7 is wrong, N should be larger than 2</li>
-</ul>
-</li>
-<li>Nice to see the input type validation on lines 5 and 6</li>
-<li>It picked up the need to test the input for a positive integer (but should be &gt; 2)</li>
-<li>The is_prime() calculation in the assert on line 8 is kinda expensive; but it hints at the question &quot;what happens of the integer input has no square root?&quot;</li>
-<li>In any event, the listing continues past line 21 with the same pattern at length</li>
-<li>Essentially correct for standard integer square roots, but way off for modulo N</li>
-<li>If we were to constrain N even further, like N mod 4 = 3, then we have shortcuts like root = input^(N+1)/4</li>
-</ul>
+<p>A prompt to stimulate the generation of a function to calculate the square root of an integer modulo N is supplied below. The resulting code continues at length but its display is cut off at line 21 for brevity. It is interesting to see input validation done here, although <code>assert</code> may be more appropriate for debug rather than production. Based on the model's generated implementation of <code>is_prime()</code> above and the docstring specifying an <strong>odd</strong> prime, line 7 needs to be adjusted to prevent a value for N of <code>2</code>. The actual logic implemented on line 10+ is simply a lookup table. While each result is indeed correct, this function is not usable in a real-world context and it is difficult to imagine the training that led to this point.</p>
 
 </div>
 </div>
@@ -15489,13 +15460,7 @@ Arb vocab:   |&#34;|#|&amp;|+|5|S|�||ine|ale|
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 <br>
-<ul>
-<li>Here we directly specify the most popular general algorithm in the docstring</li>
-<li>Now we have input validation that raises exceptions (rather than assert statements)</li>
-<li>Arguably, the literals used on line 9 should be <code>1</code> and line 11 should be <code>2</code></li>
-<li>The logic following the validation is gibberish (and continues on and on)</li>
-<li>Note that square roots come in pairs; this isn't specified</li>
-</ul>
+<p>A similar prompt to stimulate the generation of a function to calculate the square root modulo N is supplied below, but with an additional hint involving the standard <a href="https://en.wikipedia.org/wiki/Tonelli%E2%80%93Shanks_algorithm">Tonelli-Shanks algorithm</a>. Oddly, our input validation now raises the correct exception variants, although the constant on line 11 should be <code>2</code> (as also noted above). However, the look-up style logic that follows is gibberish. The strong hint for the correct algorithm is completely missed.</p>
 
 </div>
 </div>
@@ -15572,16 +15537,7 @@ Arb vocab:   |&#34;|#|&amp;|+|5|S|�||ine|ale|
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 <br>
-<h3 id="3.3-CodeGen:-Deserialization">3.3 CodeGen: Deserialization<a class="anchor-link" href="#3.3-CodeGen:-Deserialization">&#182;</a></h3><p>Security folks find many bugs in deserialization and input validation. Here we start with no corner cases to consider. Deserializing a huge number could consume excessive memory and then a 'very' slow division.</p>
-<ul>
-<li>Very nice</li>
-<li>Here, we get what we specify but we didn't specify it correctly</li>
-<li>No validation of input type; a list of big (even negative) integers would also work</li>
-<li>The size of the input should be specified exactly</li>
-<li>Big endian input is assumed, unsigned integer also assumed</li>
-<li>See <a href="https://eprint.iacr.org/2020/1244.pdf">Taming the many EdDSAs</a></li>
-<li>We want to ensure a result between [0, N)</li>
-</ul>
+<h4 id="3-Deserialization">3 Deserialization<a class="anchor-link" href="#3-Deserialization">&#182;</a></h4><p>Below we supply a prompt to stimulate the generation of a function for integer deserialization which has traditionally been an error-prone area. There are no special cases specified except for returning the deserialized integer modulo N. The generated code does not check for the input bytearray type, and would return the wrong result when given a list of large integers. Additionally, there are a host of invisible assumptions that make this code problematic, such as the big-endian format, the potential for egregiously oversized inputs leading to a (downstream) denial of service, empty input, and the unsigned (versus signed) result.</p>
 
 </div>
 </div>
@@ -15639,14 +15595,9 @@ Arb vocab:   |&#34;|#|&amp;|+|5|S|�||ine|ale|
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 <br>
-<p>Now we add corner cases in the form of both A) testcases that should pass, B) a very detailed docstring. The fact that the testcases are defined prior to the function - ignore this. Perhaps an example of test driven development (haha).</p>
-<p>See page 9 <a href="https://eprint.iacr.org/2020/1244.pdf">https://eprint.iacr.org/2020/1244.pdf</a> for non-canonical encodings; what happens when the corner cases are not specified. This demonstrates the need for the user to fully understand their target.</p>
-<p>Note that the final modulo operation is missed. The little endian aspect has been correctly picked up.</p>
-<ul>
-<li>Here is a rather nice function that uses Python's build in integer deserialization</li>
-<li>It does the input validation correctly as well.</li>
-<li>We were unable to construct a prompt that resulting in [0, N), so left it as modulo N. This is very problematic. or we may get major vulnerabilities like <a href="https://research.nccgroup.com/2021/11/08/technical-advisory-arbitrary-signature-forgery-in-stark-bank-ecdsa-libraries/">Technical Advisory – Arbitrary Signature Forgery in Stark Bank ECDSA Libraries (CVE-2021-43572, CVE-2021-43570, CVE-2021-43569, CVE-2021-43568, CVE-2021-43571)</a></li>
-</ul>
+<p>Below, the prompt is tightened with additional constraints such as an exact length of the input bytearray type. It is encouraging to see the resulting correct input validation as well as the use of the built in <code>from_bytes()</code> method with explicit choices for little-endian and unsigned.</p>
+<p>However, what we originally wanted when writing this blog post was a function that raised an exception when the deserialized integer was equal to or larger than N. Repeated 'engineering' of the prompt was unsuccessful at generating correct code. This sort of constraint is absolutely necessary -- see 
+<a href="https://research.nccgroup.com/2021/11/08/technical-advisory-arbitrary-signature-forgery-in-stark-bank-ecdsa-libraries/">Technical Advisory – Arbitrary Signature Forgery in Stark Bank ECDSA Libraries (CVE-2021-43572, CVE-2021-43570, CVE-2021-43569, CVE-2021-43568, CVE-2021-43571)</a> and table 5 in <a href="https://eprint.iacr.org/2020/1244.pdf">Taming the many EdDSAs</a> relating to non-canonical encodings. So we can approach the functionality we want, but not actually generate it.</p>
 
 </div>
 </div>
@@ -15659,8 +15610,7 @@ Arb vocab:   |&#34;|#|&amp;|+|5|S|�||ine|ale|
 <div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[16]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Unable to prompt for code that raises exception for int &gt; N</span>
-<span class="c1"># </span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Unable to prompt for code that raises exception for result &gt;= N</span>
 <span class="n">pprint</span><span class="p">(</span><span class="n">generate</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
 <span class="s2">def deserialize(bytes, N):</span>
 <span class="s2">    </span><span class="se">\&quot;</span><span class="s2">&quot;&quot;</span>
@@ -15717,15 +15667,7 @@ Arb vocab:   |&#34;|#|&amp;|+|5|S|�||ine|ale|
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 <br>
-<h3 id="3.4-CodeGen:-Encryption">3.4 CodeGen: Encryption<a class="anchor-link" href="#3.4-CodeGen:-Encryption">&#182;</a></h3><p>Encryption concentrates confidentiality into a very small set of operations. It has a specialized requirements and easy to shoot yourself in the foot</p>
-<ul>
-<li>Presumably the passphrase would be validated prior to this (for minimum length, required characters etc)</li>
-<li>Before hashing (or comparing) a Unicode string, they need to be normalized per NIST. If they are not, interoperability problems can arise resulting on user lockouts. We see this all the time.</li>
-<li>Are 100,000 iterations enough? Nope, even <a href="https://github.com/django/django/blob/5e9aded33f46dd78c5b6050186ba54ff9b02e986/django/contrib/auth/hashers.py#L298">Django has more at 720,000</a></li>
-<li>Ignores memory hard recommendations of NIST (uses sha256)</li>
-<li>The docstring specifies 16 byte output, while the key is 32 bytes below</li>
-<li>Arguably line 9 should read <code>return salt, key</code> to return a cleanly separated tuple</li>
-</ul>
+<h4 id="4-Encryption-related-functionality">4 Encryption related functionality<a class="anchor-link" href="#4-Encryption-related-functionality">&#182;</a></h4><p>Here encryption related functionality is considered, starting with a prompt to stimulate the generation of a key derivation function. Presumably the passphrase would be validated prior to this for minimum length, required characters, etc. However, <a href="https://pages.nist.gov/800-63-3/sp800-63b.html#sec5">section 5.1.1.2 of NIST SP 800-63B</a> describes the need to also normalize Unicode strings prior to hashing to avoid interoperability problems. The generated code below specifies 100,000 iterations but this is likely not enough as <a href="https://github.com/django/django/blob/5e9aded33f46dd78c5b6050186ba54ff9b02e986/django/contrib/auth/hashers.py#L298">Django currently specifies 720,000</a>. Further, <code>sha256</code> is not considered memory hard per NIST guidance. Finally, the docstring specifies an output length of 16 bytes but <code>sha256</code> returns 32 bytes. As an aside, line 9 should arguably read <code>return salt, key</code> to return a better separated tuple and remove (visual) ambiguity around addition.</p>
 
 </div>
 </div>
@@ -15790,16 +15732,8 @@ Arb vocab:   |&#34;|#|&amp;|+|5|S|�||ine|ale|
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<p>The following looks like a bad stack overflow answer.</p>
-<ul>
-<li>Straightforward, nice result</li>
-<li>However, AES in ECB mode can be disasterous<ul>
-<li><a href="https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation#ECB">Wikipedia</a> &quot;ECB is not recommended for use in cryptographic protocols.&quot;</li>
-<li>Zoom got bit <a href="https://www.zdnet.com/article/zoom-concedes-custom-encryption-is-sub-standard-as-citizen-lab-pokes-holes-in-it/">Zoom concedes custom encryption is substandard as Citizen Lab pokes holes in it</a></li>
-</ul>
-</li>
-<li>Prior experimentation with smaller models gave a function using XOR rather than AES!</li>
-</ul>
+<br>
+<p>Here a prompt is supplied to stimulate the generation of a function that performs encryption. While it is encouraging to see AES utilized, the ECB mode is likely a <a href="https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation#ECB">lurking disaster</a> as &quot;ECB is not recommended for use in cryptographic protocols.&quot; This is the same issue Zoom encountered near the start of the pandemic: <a href="https://www.zdnet.com/article/zoom-concedes-custom-encryption-is-sub-standard-as-citizen-lab-pokes-holes-in-it/">Zoom concedes custom encryption is substandard as Citizen Lab pokes holes in it</a>. As an aside, smaller models return a function where encryption is performed using a single XOR function.</p>
 
 </div>
 </div>
@@ -15861,13 +15795,7 @@ Arb vocab:   |&#34;|#|&amp;|+|5|S|�||ine|ale|
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 <br>
-<ul>
-<li>Now a precise prompt for a challenging function: decrypt via AES in GCM mode</li>
-<li>No validation of key length</li>
-<li>AES in GCM allows a broad range of IV sizes but prefers 12 bytes; AES block size is 16 bytes</li>
-<li>The cipher operations depend upon the library used; we'll give this a pass</li>
-<li>The tag at the end is specified below as 16 bytes; but this should/could be block size</li>
-</ul>
+<p>Now a more detailed prompt is supplied for decryption that uses AES in GCM mode. While the most common initialization vector (IV) length is 96 bits or 12 bytes per section 8.2 of <a href="https://nvlpubs.nist.gov/nistpubs/legacy/sp/nistspecialpublication800-38d.pdf">NIST SP 800-38d</a>, the generated code below somehow connects it to the block size which is 16 bytes. Similarly,  the <code>cipher.verify()</code> operation on line 9 suggests a fix tag size of 128 bits or 16 bytes, while the specification gives a broader range. Overall, this function looks very good but is still a little less than ideal.</p>
 
 </div>
 </div>
@@ -15877,7 +15805,7 @@ Arb vocab:   |&#34;|#|&amp;|+|5|S|�||ine|ale|
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[24]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[19]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">pprint</span><span class="p">(</span><span class="n">generate</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
@@ -15919,16 +15847,6 @@ Arb vocab:   |&#34;|#|&amp;|+|5|S|�||ine|ale|
  11:     except ValueError:
  12:         raise ValueError(&#34;Invalid key or ciphertext!&#34;)
  13: 
- 14: def aes_encrypt(plaintext, key):
- 15:     &#34;&#34;&#34;
- 16:     Encrypts the input plaintext with a key using AES in GCM mode. The key 
- 17:     must be a bytearray of length 16.
- 18:     &#34;&#34;&#34;
- 19:     iv = os.urandom(AES.block_size)
- 20:     cipher = AES.new(key, AES.MODE_GCM, iv)
- 21:     ciphertext, tag = cipher.encrypt_and_digest(plaintext)
- 22:     return iv + ciphertext + tag
- 23: 
 </pre>
 </div>
 </div>
@@ -15945,16 +15863,7 @@ Arb vocab:   |&#34;|#|&amp;|+|5|S|�||ine|ale|
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 <br>
-<h3 id="3.5-CodeGen:-Unit-tests">3.5 CodeGen: Unit tests<a class="anchor-link" href="#3.5-CodeGen:-Unit-tests">&#182;</a></h3><p>If increasing the productivity of lesser-skilled programmers concerns you, perhaps increasing the productivity of test development would be a better path forward. Sadly, this may need more work...</p>
-<ul>
-<li>Let's write a function then (next) write some tests</li>
-<li>An abbreviated function name gave better results than one fully spelled out</li>
-<li>Lovin' the input validation!<ul>
-<li>however, 'positive' does not include zero (and we even spelled that out; though this is special to us)</li>
-<li>line 7 should be if a &lt; 1 or b &lt; 1; the other tests involving zero can be removed</li>
-</ul>
-</li>
-</ul>
+<h4 id="Code-with-unit-tests">Code with unit tests<a class="anchor-link" href="#Code-with-unit-tests">&#182;</a></h4><p>If increasing the productivity of lesser-skilled programmers has become concerning, perhaps automating test case generation would be a better initial step. Here a prompt is supplied to stimulate the generation of a function that calculates the greatest common denominator of its two integer inputs -- a common programming challenge. The additional validation involving <code>0</code> is arguably correct, and this is quite nice code.</p>
 
 </div>
 </div>
@@ -16029,14 +15938,8 @@ Arb vocab:   |&#34;|#|&amp;|+|5|S|�||ine|ale|
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<ul>
-<li>Maybe LLM support for writing testcases would be helpful</li>
-<li>Here we also see the LLM abbreviating the function name</li>
-<li>Note python 3.5 introduced a standard implementation in <a href="https://docs.python.org/3/library/math.html#math.gcd">math library</a></li>
-<li>The actual values for testing are not particularly creative</li>
-<li>A human would need to understand the function, calculate (interesting) correct results, and then insert them</li>
-<li>However, a LLM writing boilerplate would be nice to have!</li>
-</ul>
+<br>
+<p>The prompt below is freeform departure from the preceding instances, and simply asks for test cases to be generated. This gives another very nice result, albeit with uninspiring choice of data. Clearly, a human would need to adapt the test vector values.</p>
 
 </div>
 </div>
@@ -16110,22 +16013,11 @@ Arb vocab:   |&#34;|#|&amp;|+|5|S|�||ine|ale|
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h1 id="Conclusions/Points-To-Make">Conclusions/Points To Make<a class="anchor-link" href="#Conclusions/Points-To-Make">&#182;</a></h1><ol>
-<li>It is shocking what the LLM is capable of.</li>
-<li>Looks suspiciously like a screen-scrape of Stack Overflow</li>
-<li>The context of a Stack Overflow answer may not match user context</li>
-<li>The burden clearly moves to correct prompt specification (think validation example).</li>
-<li>User still needs to understand what is actually correct. Increased speed may overlook corner cases.</li>
-<li>Maybe writing testcases would be more useful!</li>
-</ol>
-<h1 id="Future-LLM-research-directions">Future LLM research directions<a class="anchor-link" href="#Future-LLM-research-directions">&#182;</a></h1><ol>
-<li>Maybe a tokenizer optimized for a language syntax would be helpful</li>
-<li>A human/machine partnership &quot;on the next word&quot; may be more useful than &quot;on the next function&quot;. E.g., a more granular course correction may be more productive?</li>
-<li>Word-by-word testing would yield useful insight</li>
-<li>Importance of benchmarks; run across different languages</li>
-<li>A beam search on output -- much more expensive, but much more better?</li>
-<li>Potential for smarter fuzzing</li>
-</ol>
+<br>
+<h1 id="Conclusion">Conclusion<a class="anchor-link" href="#Conclusion">&#182;</a></h1><p>We have now looked under the hood of an LLM to understand the basic architecture, where and how 16 billion parameters are spent, and the results of asking the model to generate a variety of code fragments. At first impression, the capabilities are absolutely stunning.</p>
+<p>However, as the above examples have shown, human expertise is pivotal in correctly specifying the LLM prompt as well as evaluating the generated code output. The higher level application context typically remains unexpressed and unexamined by the model. The natural tendency for time-pressured developers to judge &quot;that looks about right&quot; along with commercial pressures to &quot;ship it when it seems to work&quot; will best-case result in a house of cards deployed into production. In the worst-case, obvious CVEs are generated.</p>
+<p>At this point, code generation by LLMs appears to change the landscape for human expertise and deep thought, but only increases rather than decreases its importance.</p>
+<hr />
 
 </div>
 </div>
@@ -16138,11 +16030,7 @@ Arb vocab:   |&#34;|#|&amp;|+|5|S|�||ine|ale|
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 <br>
-<p>End.</p>
-<br>
-<hr />
-<hr />
-<p>Full model summary follows...</p>
+<p>The author would like to thank Aleksandar Kircanski and Eli Sohl for their human expertise and detailed review. All issues remain with the author. The full model summary is shown below.</p>
 
 </div>
 </div>
@@ -16155,8 +16043,7 @@ Arb vocab:   |&#34;|#|&amp;|+|5|S|�||ine|ale|
 <div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[22]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># ...just for reference...</span>
-<span class="n">pprint</span><span class="p">(</span><span class="n">model_summary</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2000</span><span class="p">)</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">pprint</span><span class="p">(</span><span class="n">model_summary</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2000</span><span class="p">)</span>
 </pre></div>
 
      </div>
@@ -16605,38 +16492,6 @@ Arb vocab:   |&#34;|#|&amp;|+|5|S|�||ine|ale|
 
 </div>
 
-</div>
-
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h4 id="Todo">Todo<a class="anchor-link" href="#Todo">&#182;</a></h4><ol>
-<li>How to embed svg/png? Put NCC logo at top</li>
-<li>Sprint conclusions back into examples, so final conclusions are evidence based</li>
-<li>CSS tweak for larger text font w/ larger line spacing</li>
-</ol>
-
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-     <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span> 
-</pre></div>
-
-     </div>
-</div>
-</div>
 </div>
 
 </div>
